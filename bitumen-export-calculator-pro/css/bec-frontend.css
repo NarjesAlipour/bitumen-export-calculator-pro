@@ -1,0 +1,5 @@
+#bec-wrapper { border: 1px solid #ccc; padding: 20px; max-width: 400px; }
+.bec-field { margin-bottom: 15px; }
+.bec-err { color: red; font-size: 12px; display: block; }
+.bec-res { background: #f4f4f4; padding: 15px; margin-top: 15px; }
+#bec-calc-btn { width: 100%; padding: 10px; cursor: pointer; background: #333; color: #fff; border: none; }
