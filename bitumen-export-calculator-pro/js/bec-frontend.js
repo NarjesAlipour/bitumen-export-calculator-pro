@@ -1,12 +1,13 @@
 jQuery(document).ready(function($) {
     $('#bec-calc-btn').on('click', function() {
         $('.bec-err').text('');
+        $('#bec-result').hide();
         var qty = parseFloat($('#bec-qty').val()), dest = $('#bec-dest').val(), err = false;
         if (qty < 100 || qty > 1000 || isNaN(qty)) { $('#err-qty').text('Range: 100-1000 MT'); err = true; }
         if (!dest) { $('#err-dest').text('Select destination'); err = true; }
         if (err) return;
 
-        $(this).prop('disabled', true).text('...');
+        $(this).prop('disabled', true).text('Calculating...');
         $.post(bec_vars.ajax_url, {
             action: 'bec_calculate',
             security: bec_vars.nonce,

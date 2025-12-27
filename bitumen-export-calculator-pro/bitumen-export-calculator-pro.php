@@ -60,7 +60,17 @@ class Bitumen_Export_Calculator {
     private function parse($s) {
         $lines = explode("\n", str_replace("\r", "", $s));
         $d = [];
-        foreach ($lines as $l) { $p = explode('|', $l); if (count($p) == 2) $d[trim($p[0])] = floatval(trim($p[1])); }
+        foreach ($lines as $l) {
+            if (strpos($l, '|') === false) continue;
+            $p = explode('|', $l, 2);
+            if (count($p) == 2) {
+                $key = trim($p[0]);
+                $value = floatval(trim($p[1]));
+                if (!empty($key)) {
+                    $d[$key] = $value;
+                }
+            }
+        }
         return $d;
     }
 
@@ -78,7 +88,7 @@ class Bitumen_Export_Calculator {
             </div>
             <div class="bec-field">
                 <label>Grade</label>
-                <select id="bec-type"><?php foreach($types as $n => $p) echo "<option value='$n'>$n</option>"; ?></select>
+                <select id="bec-type"><?php foreach($types as $n => $p) echo "<option value='" . esc_attr($n) . "'>" . esc_html($n) . "</option>"; ?></select>
             </div>
             <div class="bec-field">
                 <label>Packaging</label>
@@ -86,7 +96,7 @@ class Bitumen_Export_Calculator {
             </div>
             <div class="bec-field">
                 <label>Destination</label>
-                <select id="bec-dest"><option value="">-- Select --</option><?php foreach($dests as $n => $c) echo "<option value='$n'>$n</option>"; ?></select>
+                <select id="bec-dest"><option value="">-- Select --</option><?php foreach($dests as $n => $c) echo "<option value='" . esc_attr($n) . "'>" . esc_html($n) . "</option>"; ?></select>
                 <span class="bec-err" id="err-dest"></span>
             </div>
             <button id="bec-calc-btn">Calculate</button>
@@ -98,12 +108,22 @@ class Bitumen_Export_Calculator {
     public function handle_calculation() {
         check_ajax_referer('bec_nonce_action', 'security');
         $opt = get_option($this->option_name);
-        $qty = floatval($_POST['qty']);
+        $qty = isset($_POST['qty']) ? floatval($_POST['qty']) : 0;
+        $type = isset($_POST['type']) ? sanitize_text_field($_POST['type']) : '';
+        $pack_type = isset($_POST['pack']) ? sanitize_text_field($_POST['pack']) : '';
+        $dest = isset($_POST['dest']) ? sanitize_text_field($_POST['dest']) : '';
         $cur = $opt['currency'] ?? '$';
         
-        $base = $this->parse($opt['types'])[$_POST['type']];
-        $ship = $this->parse($opt['destinations'])[$_POST['dest']];
-        $pack = ($_POST['pack'] === 'jumbo') ? $opt['jumbo_cost'] : $opt['drum_cost'];
+        $types = $this->parse($opt['types']);
+        $dests = $this->parse($opt['destinations']);
+
+        if (!isset($types[$type]) || !isset($dests[$dest])) {
+            wp_send_json_error(['message' => 'Invalid selection.']);
+        }
+
+        $base = $types[$type];
+        $ship = $dests[$dest];
+        $pack = ($pack_type === 'jumbo') ? $opt['jumbo_cost'] : $opt['drum_cost'];
 
         if ($qty > 500) $base *= 0.95; // 5% Discount
 
